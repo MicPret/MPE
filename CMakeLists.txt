@@ -1,17 +1,43 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.20)
 
 project(MPE)
 
+#--EXTERNAL LIBRARIES--
+set(MPE_EXTERNAL ${CMAKE_CURRENT_SOURCE_DIR}/ext)
+
+#--------IMGUI---------
+set(IMGUI_PATH ${MPE_EXTERNAL}/imgui)
+
+file(GLOB IMGUI_SOURCES
+	${IMGUI_PATH}/*.cpp
+)
+
+#---------MPE----------
+file (GLOB MPE_SOURCES
+	${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+)
+
+file(GLOB MPE_INCLUDE_PATHS
+	${MPE_EXTERNAL}/*/include
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+#---------GLFW---------
 add_subdirectory(ext/glfw)
 
+#------EXECUTABLE------
 add_executable(MPE
-	main.cpp
-	ext/glad/src/gl.c
+	${IMGUI_SOURCES}	#imgui
+	ext/glad/src/gl.c	#glad
+	${MPE_SOURCES}
 )
 
-target_link_libraries(MPE
+#-------INCLUDE--------
+target_include_directories(MPE PUBLIC ${MPE_INCLUDE_PATHS})
+target_include_directories(MPE PUBLIC ${MPE_EXTERNAL})
+
+
+#---------LINK---------
+target_link_libraries(MPE PUBLIC
 	glfw
 )
-
-target_include_directories(MPE PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ext/glad/include)
-target_include_directories(MPE PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ext/glfw/include)
