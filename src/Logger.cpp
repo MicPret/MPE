@@ -9,12 +9,6 @@
 
 namespace mpe
 {
-	Logger& Logger::GetInstance()
-	{
-		static Logger logger;
-		return logger;
-	}
-
 	Logger::Logger() :
 		filter(~0),
 		externalBuffer(nullptr)
@@ -139,7 +133,7 @@ namespace mpe
 			.append(timestamp.str())			//[SEVERITY]	[ORIGIN]	[TIMESTAMP]
 			//.append({ '\t' })
 			.append(message)					//[SEVERITY]	[ORIGIN]	[TIMESTAMP]	MESSAGE
-			.append({ '\n' });
+			.append("\n\n");
 
 		return log;
 	}

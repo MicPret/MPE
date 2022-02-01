@@ -27,10 +27,10 @@ add_subdirectory(ext/glfw)
 
 #------EXECUTABLE------
 add_executable(MPE
-	${IMGUI_SOURCES}	#imgui
 	ext/glad/src/gl.c	#glad
+	${IMGUI_SOURCES}	#imgui
 	${MPE_SOURCES}
-)
+ "src/Shader.cpp" "src/Renderer.cpp")
 
 #-------INCLUDE--------
 target_include_directories(MPE PUBLIC ${MPE_INCLUDE_PATHS})

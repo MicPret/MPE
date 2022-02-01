@@ -6,6 +6,7 @@
 
 namespace mpe
 {
+	//Severity of a log message
 	enum class LogSeverity : unsigned char
 	{
 		Info = 0,
@@ -14,6 +15,7 @@ namespace mpe
 		Count
 	};
 
+	//Source of a log message
 	enum class LogOrigin : unsigned char
 	{
 		RenderingApi = 0,
@@ -22,6 +24,7 @@ namespace mpe
 		Count
 	};
 
+	//Output target of a log message
 	enum class LogTarget : unsigned char
 	{
 		StdOut = 0,
@@ -30,11 +33,14 @@ namespace mpe
 		Count
 	};
 
+	//Allows logging on standard output, file or string buffer
 	class Logger
 	{
 	public:
-		//Static method to get the Singleton instance
-		static Logger& GetInstance();
+		//Initializes for logging on stdout
+		Logger();
+		//Flushes on destruction
+		~Logger();
 		//Adds a message to the buffer
 		void Log(const std::string& message, LogSeverity severity = LogSeverity::Info, LogOrigin origin = LogOrigin::User);
 		//Outputs the buffer depending on the included targets and calls Reset()
@@ -59,14 +65,7 @@ namespace mpe
 		bool IsIgnoring(LogSeverity severity) const;
 		//Initial buffer size. Actual buffer size might change if the Logger receives large messages
 		static constexpr size_t INITIAL_BUFFER_SIZE = 512;
-		//Flushes on destruction
-		~Logger();
-		Logger(const Logger&) = delete;
-		Logger(Logger&&) = delete;
-		Logger& operator =(const Logger&) = delete;
-		Logger& operator =(Logger&&) = delete;
 	private:
-		Logger();
 		std::string BuildLog(const std::string& message, LogSeverity severity, LogOrigin origin) const;
 		bool CanFit(const std::string& log) const;
 		std::bitset<static_cast<size_t>(LogSeverity::Count)> filter;
