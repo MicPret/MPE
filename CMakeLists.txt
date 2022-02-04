@@ -41,3 +41,6 @@ target_include_directories(MPE PUBLIC ${MPE_EXTERNAL})
 target_link_libraries(MPE PUBLIC
 	glfw
 )
+
+#-------STANDARD-------
+set_property(TARGET MPE PROPERTY CXX_STANDARD 17)
