@@ -9,8 +9,14 @@
 
 namespace mpe
 {
+	class IComponentBuffer
+	{
+	public:
+		virtual ~IComponentBuffer() = default;
+	};
+
 	template <typename C>
-	class ComponentBuffer
+	class ComponentBuffer : public IComponentBuffer
 	{
 	public:
 		ComponentBuffer() = default;
@@ -18,7 +24,7 @@ namespace mpe
 		const std::vector<Entity>& Entities() const;
 		//Creates a Component for the specified Entity if it doesn't exist and writes to it
 		template <typename... Args>
-		C& SetComponent(Entity e, Args&& args);
+		C& SetComponent(Entity e, Args&&... args);
 		//Returns the Component associated to the specified Entity
 		C& GetComponent(Entity e);
 	private:
@@ -53,8 +59,8 @@ namespace mpe
 	}
 
 	template<typename C>
-	template<typename ...Args>
-	C& ComponentBuffer<C>::SetComponent(Entity e, Args&& args)
+	template<typename... Args>
+	C& ComponentBuffer<C>::SetComponent(Entity e, Args&&... args)
 	{
 		//Calculate correct Page
 		size_t page_index = e / ENTITIES_PER_PAGE;

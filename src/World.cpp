@@ -2,10 +2,10 @@
 
 namespace mpe
 {
-	World& World::GetInstance()
+	World::~World()
 	{
-		static World world;
-		return world;
+		for (IComponentBuffer* buf : buffers)
+			delete buf;
 	}
 
 	Entity World::NewEntity()
