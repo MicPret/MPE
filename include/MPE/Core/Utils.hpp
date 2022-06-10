@@ -4,19 +4,19 @@
 #include <utility>
 #include <string_view>
 #include <cstdint>
+#include <type_traits>
+#include <optional>
+#include <string>
+
+#define MPE_IMPLEMENT_ENUM_ORDERING(EnumName) \
+constexpr bool operator <(EnumName a, EnumName b) \
+{ \
+    using underlying = std::underlying_type_t<EnumName>; \
+    return static_cast<underlying>(a) < static_cast<underlying>(b); \
+}
 
 namespace mpe
 {
-	//Lets the user access one global variable for every default-constructible type.
-	//For instance, MPE uses a global Logger. Users can access the same Logger
-	//and/or instantiate their own
-	template <typename T>
-	T& Global()
-	{
-		static T globl;
-		return globl;
-	}
-
     //Returns the name of the specified type at compile time
     template <typename T>
     constexpr std::string_view TypeName();
@@ -24,12 +24,15 @@ namespace mpe
     template <>
     constexpr std::string_view TypeName<void>() { return "void"; }
 
-    constexpr uint32_t Hash(std::string_view s)
+    //FNV-1a string hash
+    constexpr size_t Hash(std::string_view s)
     {
         size_t size = s.size();
+        constexpr size_t offset = 14695981039346656037u;
+        constexpr size_t prime = 1099511628211u;
         return size > 0 ?
-            (Hash(s.substr(0, size - 1)) ^ s[size - 1]) * 16777619u :
-            2166136261u;
+            (Hash(s.substr(0, size - 1)) ^ s[size - 1]) * prime :
+            offset;
     }
 
     namespace detail

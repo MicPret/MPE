@@ -12,6 +12,4 @@ _deps
 .vs/
 out/
 
-include/MPE/Graphics
-src/Renderer.cpp
-src/Shader.cpp
+.vscode/

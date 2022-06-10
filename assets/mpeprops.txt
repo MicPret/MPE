@@ -1,0 +1,3 @@
+TEXTURES_PATH=Resources/Textures/
+SHADERS_PATH=Resources/Shaders/
+MESHES_PATH=Resources/Meshes/

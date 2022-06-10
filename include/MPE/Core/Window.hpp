@@ -29,18 +29,16 @@ namespace mpe
 		int Width() const;
 		//Returns the height of the window
 		int Height() const;
-		//Set the color the window is supposed to show when nothing is rendered on it
-		void SetClearColor(float r, float g, float b, float a);
-		//Must be called before drawing anything
-		void BeginFrame();
 		//Must be called to draw the current frame
-		void EndFrame();
+		void Draw();
 		//Returns true if the window is going to close
 		bool ShouldClose() const;
 		//Returns the underlying implementation
 		GLFWwindow* GetNativeWindow();
 		//Returns the underlying implementation
 		const GLFWwindow* GetNativeWindow() const;
+		//Sets the background default color
+		void SetClearColor(float r, float g, float b);
 		//Not available yet
 		Window(const Window&) = delete;
 		//Not available yet
@@ -49,12 +47,13 @@ namespace mpe
 		Window& operator =(const Window&) = delete;
 		//Not available yet
 		Window& operator =(Window&&) = delete;
+		//Returns the Window set as graphics context
+		static Window* GetActive();
 	private:
 		GLFWwindow* win;
 		int w;
 		int h;
 		static int initialized_windows;
-		static bool InitializeGLFW();
 	};
 }
 

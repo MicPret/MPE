@@ -1,16 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
 
+#-------STANDARD-------
+set(CMAKE_CXX_STANDARD 17)
+
 project(MPE)
 
 #--EXTERNAL LIBRARIES--
 set(MPE_EXTERNAL ${CMAKE_CURRENT_SOURCE_DIR}/ext)
-
-#--------IMGUI---------
-set(IMGUI_PATH ${MPE_EXTERNAL}/imgui)
-
-file(GLOB IMGUI_SOURCES
-	${IMGUI_PATH}/*.cpp
-)
 
 #---------MPE----------
 file (GLOB MPE_SOURCES
@@ -28,9 +24,7 @@ add_subdirectory(ext/glfw)
 #------EXECUTABLE------
 add_executable(MPE
 	ext/glad/src/gl.c	#glad
-	${IMGUI_SOURCES}	#imgui
-	${MPE_SOURCES}
- "src/Shader.cpp" "src/Renderer.cpp")
+	${MPE_SOURCES})
 
 #-------INCLUDE--------
 target_include_directories(MPE PUBLIC ${MPE_INCLUDE_PATHS})
@@ -42,5 +36,8 @@ target_link_libraries(MPE PUBLIC
 	glfw
 )
 
-#-------STANDARD-------
-set_property(TARGET MPE PROPERTY CXX_STANDARD 17)
+#------RESOURCES-------
+add_custom_target(copy_assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/assets ${CMAKE_CURRENT_BINARY_DIR}
+)
+add_dependencies(MPE copy_assets)

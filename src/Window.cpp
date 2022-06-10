@@ -1,6 +1,8 @@
 #include <MPE/Core/Window.hpp>
-#include <MPE/Core/Logger.hpp>
+#include <MPE/Core/Log.hpp>
 #include <MPE/Core/Utils.hpp>
+#include <MPE/Graphics/Renderer.hpp>
+#include <MPE/Graphics/Camera.hpp>
 
 #include <glad/gl.h>
 #include <glfw/glfw3.h>
@@ -8,28 +10,24 @@
 namespace mpe
 {
 	int Window::initialized_windows = 0;
+	static bool InitializeGLFW();
 
 	Window::Window(const std::string& title, int width, int height) :
 		win(nullptr),
 		w(-1),
 		h(-1)
 	{
-		Logger& logger = Global<Logger>();
-		std::string message;
-
 		//Test size
 		if ((width < 0) || (height < 0))
 		{
-			message = "Invalid Window size: width and height must be greater than zero!";
-			logger.Log(message, LogSeverity::Error, LogOrigin::MPE);
+			MPE_ERROR("Invalid Window size: width and height must be greater than zero!");
 			return;
 		}
 
 		//Test window title
 		if (title.empty())
 		{
-			message = "Window must have a title!";
-			logger.Log(message, LogSeverity::Error, LogOrigin::MPE);
+			MPE_ERROR("Window must have a title!");
 			return;
 		}
 
@@ -38,8 +36,7 @@ namespace mpe
 		{
 			if (!InitializeGLFW())
 			{
-				message = "GLFW failed during initialization!";
-				logger.Log(message, LogSeverity::Error, LogOrigin::MPE);
+				MPE_ERROR("GLFW failed during initialization!");
 				return;
 			}
 		}
@@ -50,8 +47,7 @@ namespace mpe
 		//Test window creation
 		if (win == nullptr)
 		{
-			message = "GLFW failed to create a window!";
-			logger.Log(message, LogSeverity::Error, LogOrigin::MPE);
+			MPE_ERROR("GLFW failed to create a window!");
 			glfwTerminate();
 			return;
 		}
@@ -65,48 +61,66 @@ namespace mpe
 			int version = gladLoadGL((GLADloadfunc)glfwGetProcAddress);
 			if (version == 0)
 			{
-				message = "Failed to load OpenGL functions!";
-				logger.Log(message, LogSeverity::Error, LogOrigin::MPE);
+				MPE_ERROR("Failed to load OpenGL functions!");
 				Destroy();
 				glfwTerminate();
 				return;
 			}
-			else
-			{
-				message = "Loaded OpenGL functions [version: " + std::to_string(version) + ']';
-				logger.Log(message, LogSeverity::Info, LogOrigin::MPE);
 
-				//Debug Output
+			MPE_INFO("Loaded OpenGL functions [version: " + std::to_string(version) + ']');
+			
+			MPE_INFO("OpenGL version: " + std::string((const char*)glGetString(GL_VERSION)));
+
+			//Debug Output
 #ifndef NDEBUG
-				auto glDebugOutput = [](
-					GLenum source,
-					GLenum type,
-					unsigned int id,
-					GLenum severity,
-					GLsizei length,
-					const char* message,
-					const void* userParam)
+			auto glDebugOutput = [](
+				GLenum source,
+				GLenum type,
+				unsigned int id,
+				GLenum severity,
+				GLsizei length,
+				const char* message,
+				const void* userParam)
+			{
+				std::string msg = "OpenGL code: " + std::to_string(id) + '\n' + message;
+				switch (severity)
 				{
-					LogSeverity sev = LogSeverity::Warning;
-					switch (severity)
-					{
-					case GL_DEBUG_SEVERITY_NOTIFICATION:
-						sev = LogSeverity::Info;
-						break;
-					case GL_DEBUG_SEVERITY_HIGH:
-						sev = LogSeverity::Error;
-						break;
-					}
-					Global<Logger>().Log(std::string(message), sev, LogOrigin::RenderingApi);
-				};
+				case GL_DEBUG_SEVERITY_NOTIFICATION:
+					MPE_INFO(msg);
+					break;
+				case GL_DEBUG_SEVERITY_HIGH:
+					MPE_ERROR(msg);
+					break;
+				default:
+					MPE_WARNING(msg);
+					break;
+				}
+			};
 
-				glEnable(GL_DEBUG_OUTPUT);
-				glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-				glDebugMessageCallback(glDebugOutput, nullptr);
-				glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true);
-#endif
-			}
+			glEnable(GL_DEBUG_OUTPUT);
+			glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+			glDebugMessageCallback(glDebugOutput, nullptr);
+			glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, true);
+#endif			
 		}
+		SetClearColor(0.4f, 0.67f, 0.9f);
+		glfwSetWindowUserPointer(win, this);
+		glfwSetFramebufferSizeCallback(win, [](GLFWwindow* win_, int w_, int h_)
+			{
+				Window* window = static_cast<Window*>(glfwGetWindowUserPointer(win_));
+
+				float new_aspect = (float)w_ / (float)h_;
+
+				Camera* cam = Renderer::GetActiveCamera();
+				if (cam != nullptr)
+				{
+					Transform t = cam->GetTransform();
+					cam = new (cam) Camera(cam->GetFov(), new_aspect, cam->GetNearPlane(), cam->GetFarPlane());
+					cam->SetTransform(t);
+				}
+
+				glViewport(0, 0, w_, h_);
+			});
 
 		w = width;
 		h = height;
@@ -150,23 +164,10 @@ namespace mpe
 		return h;
 	}
 
-	void Window::SetClearColor(float r, float g, float b, float a)
+	void Window::Draw()
 	{
-		glClearColor(r, g, b, a);
-	}
-
-	void Window::BeginFrame()
-	{
-		//TODO other bits
-		glClear(GL_COLOR_BUFFER_BIT);
-		//TODO imgui stuff???
-	}
-
-	void Window::EndFrame()
-	{
-		//TODO imgui stuff???
-		glfwPollEvents();
 		glfwSwapBuffers(win);
+		glfwPollEvents();
 	}
 
 	bool Window::ShouldClose() const
@@ -184,7 +185,17 @@ namespace mpe
 		return win;
 	}
 
-	bool Window::InitializeGLFW()
+	void Window::SetClearColor(float r, float g, float b)
+	{
+		glClearColor(r, g, b, 1.0f);
+	}
+
+	Window* Window::GetActive()
+	{
+		return static_cast<Window*>(glfwGetWindowUserPointer(glfwGetCurrentContext()));
+	}
+
+	bool InitializeGLFW()
 	{
 		if (glfwInit() == GLFW_FALSE)
 			return false;
