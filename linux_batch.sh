@@ -1,0 +1,1 @@
+cmake -S . -B out && cd out && make && ./MPE && cd ..
