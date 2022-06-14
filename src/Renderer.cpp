@@ -13,6 +13,7 @@
 #include <MPE/Core/Log.hpp>
 #include <MPE/Core/Transform.hpp>
 #include <MPE/Maths/MathsDefines.hpp>
+#include <MPE/Core/Window.hpp>
 
 #include <glad/gl.h>
 
@@ -20,7 +21,6 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
-#include <MPE/Core/Window.hpp>
 
 namespace
 {
