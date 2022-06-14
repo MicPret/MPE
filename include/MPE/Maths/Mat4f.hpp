@@ -4,6 +4,7 @@
 #include "Vec3f.hpp"
 #include "Vec4f.hpp"
 
+#include <cstddef>
 #include <array>
 
 namespace mpe
