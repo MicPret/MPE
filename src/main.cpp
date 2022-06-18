@@ -3,6 +3,7 @@
 #include <MPE/Core/Properties.hpp>
 #include <MPE/Core/Transform.hpp>
 #include <MPE/Core/Time.hpp>
+#include <MPE/Core/Input.hpp>
 #include <MPE/Maths/Mat4f.hpp>
 #include <MPE/Maths/Vec3f.hpp>
 #include <MPE/Graphics/Shader.hpp>
@@ -14,9 +15,6 @@
 #include <MPE/Graphics/VertexIndex.hpp>
 #include <MPE/Graphics/PointLight.hpp>
 #include <MPE/Importers/OBJLoader.hpp>
-
-#include <glad/gl.h>
-#include <GLFW/glfw3.h>
 
 #include <cmath>
 
@@ -87,32 +85,28 @@ int main()
 
 		Vec3f direction;
 		direction = direction + (
-			((float)(glfwGetKey(w.GetNativeWindow(), 'D') == GLFW_PRESS) - (float)(glfwGetKey(w.GetNativeWindow(), 'A') == GLFW_PRESS))
-			* right);
+			((float)(Input::IsKeyPressed('D')) - (float)(Input::IsKeyPressed('A'))) * right);
 		direction = direction + (
-			((float)(glfwGetKey(w.GetNativeWindow(), 'W') == GLFW_PRESS) - (float)(glfwGetKey(w.GetNativeWindow(), 'S') == GLFW_PRESS))
-			* forward);
+			((float)(Input::IsKeyPressed('W')) - (float)(Input::IsKeyPressed('S'))) * forward);
 
-		direction.y += (float)(glfwGetKey(w.GetNativeWindow(), 'Q') == GLFW_PRESS);
-		direction.y -= (float)(glfwGetKey(w.GetNativeWindow(), 'E') == GLFW_PRESS);
+		direction.y += (float)Input::IsKeyPressed('Q');
+		direction.y -= (float)Input::IsKeyPressed('E');
 
 		Quaternion rotX(
 			right,
-			((float)(glfwGetKey(w.GetNativeWindow(), 'K') == GLFW_PRESS)
-				- (float)(glfwGetKey(w.GetNativeWindow(), 'I') == GLFW_PRESS)) * dt * 0.5f);
+			((float)Input::IsKeyPressed('K') - (float)(Input::IsKeyPressed('I'))) * dt * 0.5f);
 		Quaternion rotY(
 			up,
-			((float)(glfwGetKey(w.GetNativeWindow(), 'L') == GLFW_PRESS)
-				- (float)(glfwGetKey(w.GetNativeWindow(), 'J') == GLFW_PRESS)) * dt * 0.5f);
+			((float)(Input::IsKeyPressed('L')) - (float)(Input::IsKeyPressed('J'))) * dt * 0.5f);
 
 		camera_transform.rotation = rotY * rotX * camera_transform.rotation;		
 		camera_transform.position = camera_transform.position + (dt * direction);
 		camera.SetTransform(camera_transform);
 
 		Shader selected_shader = blinn;
-		if (glfwGetKey(w.GetNativeWindow(), 'P') == GLFW_PRESS)
+		if (Input::IsKeyPressed('P'))
 			selected_shader = phong;
-		else if (glfwGetKey(w.GetNativeWindow(), 'U') == GLFW_PRESS)
+		else if (Input::IsKeyPressed('U'))
 			selected_shader = unlit;
 		else
 		{
