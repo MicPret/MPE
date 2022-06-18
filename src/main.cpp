@@ -2,6 +2,7 @@
 #include <MPE/Core/Window.hpp>
 #include <MPE/Core/Properties.hpp>
 #include <MPE/Core/Transform.hpp>
+#include <MPE/Core/Time.hpp>
 #include <MPE/Maths/Mat4f.hpp>
 #include <MPE/Maths/Vec3f.hpp>
 #include <MPE/Graphics/Shader.hpp>
@@ -60,7 +61,7 @@ int main()
 	mat1.textures[Material::SPECULAR_MAP_INDEX] = diff_texture;
 	Vec3f rotation_axis = Vec3f(0.03f, 0.8f, 0.1f).Normalized();
 
-	float last = static_cast<float>(glfwGetTime());
+	float last = Time::GetTime();
 	float y1, y2;
 	y1 = y2 = 0.0f;
 	constexpr float shininess0 = 2.5f;
@@ -76,7 +77,7 @@ int main()
 
 	while (!w.ShouldClose())
 	{
-		float now = static_cast<float>(glfwGetTime());
+		float now = Time::GetTime();
 		float dt = now - last;
 		last = now;
 
@@ -156,92 +157,3 @@ int main()
 	
 	return 0;
 }
-
-/*
-struct ComponentA {};
-class ComponentB {};
-int main()
-{
-	using namespace mpe;
-
-	ParsePropertiesFromFile("mpeprops.txt");
-
-	Mesh mesh;
-	mesh.vertices =
-	{
-		{ Vec3f(-1, -1, -1) },
-		{ Vec3f(1, -1, -1) },
-		{ Vec3f(1, 1, -1) },
-		{ Vec3f(-1, 1, -1) },
-		{ Vec3f(-1, -1, 1) },
-		{ Vec3f(1, -1, 1) },
-		{ Vec3f(1, 1, 1) },
-		{ Vec3f(-1, 1, 1) }
-
-	};
-	mesh.indices =
-	{
-		0, 1, 3, 3, 1, 2,
-		1, 5, 2, 2, 5, 6,
-		5, 4, 6, 6, 4, 7,
-		4, 0, 7, 7, 0, 3,
-		3, 2, 7, 7, 2, 6,
-		4, 5, 0, 0, 5, 1
-	};
-
-	Window window("Test window", 800, 600);
-	Renderer::Initialize();
-
-	Material mat{};
-	Shader shader = LoadShader("default_shader.glsl").value();
-
-	while (!window.ShouldClose())
-	{
-		Renderer::BeginFrame();
-		static Mat4f transform = Mat4f::Identity();
-		static int i = 0;
-		i++;
-		mat.shininess = (float)i * 0.03f;
-		Renderer::Render({ &mesh, 1 }, { &mat, 1 }, { &transform, 1 }, shader);
-		transform[12] += 0.01f;
-		Renderer::EndFrame();
-		window.Draw();
-	}
-
-	Renderer::Terminate();
-	window.Destroy();
-
-	return 0;
-}
-
-void test_ecs()
-{
-	mpe::World w;
-	std::array<mpe::Entity, 4> entities = { w.NewEntity(), w.NewEntity(), w.NewEntity(), w.NewEntity() };
-
-	for (mpe::Entity e : entities)
-		w.SetComponent<ComponentA>(e);
-	w.SetComponent<ComponentB>(entities[2]);
-	w.SetComponent<ComponentB>(entities[3]);
-
-	auto system = [](mpe::World& world, float dt)
-	{
-		auto interesting_entities = world.GetEntities<ComponentA, ComponentB>();
-		constexpr std::array<std::string_view, 2> names = { mpe::TypeName<ComponentA>(), mpe::TypeName<ComponentB>() };
-
-		mpe::Logger logger;
-		for (mpe::Entity e : interesting_entities)
-		{
-			logger.Log(
-				"Entity " + std::to_string(e) + " has " + std::string(names[0]) + " and " + std::string(mpe::TypeName<ComponentB>()),
-				mpe::LogSeverity::Info,
-				mpe::LogOrigin::User
-			);
-		}
-	};
-
-	w.RegisterSystem(mpe::SystemBucket::Default, system);
-
-	for (int i = 0; i < 10; i++)
-		w.Update(0.0f);
-}*/
