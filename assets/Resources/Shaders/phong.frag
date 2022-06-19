@@ -1,69 +1,8 @@
-#version 460 core
-
-//Structs
-struct FragmentMeshData
-{
-    int texture_index0; //diffuse
-    int texture_index1; //specular
-    int texture_index2;
-    int texture_index3;
-    int texture_index4;
-    int texture_index5;
-    int texture_index6;
-    int texture_index7;
-
-    float float0;   //shininess
-    float float1;
-    float float2;
-    float float3;
-    float float4;
-    float float5;
-    float float6;
-    float float7;
-
-    vec4 vecs[8];
-
-    mat4 model;
-};
-
-struct PointLight //64 bytes
-{
-    vec4 position_constant;
-    vec4 ambient_linear;
-    vec4 diffuse_quadratic;
-    vec4 specular;
-};
-
-//Uniforms
-uniform sampler2D textures[8];
-uniform samplerCube depth_maps[8];
-
-layout (std140, binding = 0) uniform CameraData
-{
-    mat4 projection;
-    mat4 view;
-    vec4 camera_pos;
-    float near;
-    float far;
-};
-
-layout (std140, binding = 1) uniform MeshData
-{
-    FragmentMeshData mesh_data[64];
-};
-
-layout (std140, binding = 2) uniform LightData
-{
-    PointLight point_lights[8];
-    int num_point_lights;
-};
-
-
 //Input
 layout (location = 0) in vec3 vx_position;
 layout (location = 1) in vec2 vx_texCoords;
 layout (location = 2) in vec3 vx_normal;
-layout (location = 3) flat in int vx_drawID;
+layout (location = 3) flat in int vx_DrawID;
 
 //Output
 out vec4 result;
@@ -93,19 +32,16 @@ vec3 ComputePointLight(PointLight light, vec3 normal, vec3 frag_pos, vec3 view_d
     float diff = max(dot(normal, light_dir), 0.0);
 
     vec3 reflect_dir = reflect(-light_dir, normal);
-    float shininess = mesh_data[vx_drawID].float0;
+    float shininess = mesh_data[vx_DrawID].float0;
     float spec = pow(max(dot(view_dir, reflect_dir), 0.0), shininess);
 
     float dist = distance(light_pos, frag_pos);
     float attenuation =
-        1.0 / (light.position_constant.w + light.ambient_linear.w * dist + light.diffuse_quadratic.w * (dist * dist));    
-
-    int diffuse_index = mesh_data[vx_drawID].texture_index0;
-    int specular_index = mesh_data[vx_drawID].texture_index1;
+        1.0 / (light.position_constant.w + light.ambient_linear.w * dist + light.diffuse_quadratic.w * (dist * dist));
     
-    vec3 diffuse = light.diffuse_quadratic.xyz * diff * vec3(texture(textures[diffuse_index], vx_texCoords));
-    vec3 specular = light.specular.xyz * spec * vec3(texture(textures[specular_index], vx_texCoords));
-    vec3 ambient = light.ambient_linear.xyz * vec3(texture(textures[diffuse_index], vx_texCoords));
+    vec3 diffuse = light.diffuse_quadratic.xyz * diff * vec3(texture(DIFFUSE_TEXTURE, vx_texCoords));
+    vec3 specular = light.specular.xyz * spec * vec3(texture(SPECULAR_TEXTURE, vx_texCoords));
+    vec3 ambient = light.ambient_linear.xyz * vec3(texture(DIFFUSE_TEXTURE, vx_texCoords));
 
     diffuse *= attenuation;
     specular *= attenuation;

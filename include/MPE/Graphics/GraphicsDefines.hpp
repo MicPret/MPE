@@ -1,11 +1,10 @@
 #ifndef MPE_GRAPHICS_DEFINES_HPP
 #define MPE_GRAPHICS_DEFINES_HPP
 
+//common.glsl
+
 #define MPE_CAMERA_BINDING 0
 #define MPE_MESH_BINDING 1
 #define MPE_LIGHT_BINDING 2
-#define MPE_CAMERA_BLOCK_NAME "CameraData"
-#define MPE_MESH_BLOCK_NAME "MeshData"
-#define MPE_LIGHT_BLOCK_NAME "LightData"
 
 #endif

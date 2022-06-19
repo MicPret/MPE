@@ -15,8 +15,7 @@
 
 namespace mpe
 {
-	static GLuint CompileShader(const std::string& source, GLenum type, GLint* success);
-	static bool ValidateForMPE(GLuint shader_program);
+	static GLuint CompileShader(const std::string& source, const std::string& defines, GLenum type, GLint* success);
 
 	Shader LoadShader(const std::string& shader_name, ShaderPriority priority)
 	{
@@ -24,11 +23,21 @@ namespace mpe
 
 		MPE_INFO("Compiling shader: " + shader_name);
 
-		std::string path = GetGlobalProperty(SHADERS_PATH_PROPERTY) + shader_name;
-		std::string vertex_path = path + ".vert";
-		std::string fragment_path = path + ".frag";
-
 		std::string could_not_find_or_open = "Failure: could not find/open shader file: ";
+		std::string path = GetGlobalProperty(SHADERS_PATH_PROPERTY);
+		std::string shader_path = path + shader_name;
+
+		std::string defines_path = path + "common.glsl";
+		const auto defines = ReadFileAsString(defines_path);
+		if (!defines.has_value())
+		{
+			MPE_ERROR(could_not_find_or_open + defines_path);
+			return invalid;
+		}
+
+		std::string vertex_path = shader_path + ".vert";
+		std::string fragment_path = shader_path + ".frag";
+
 		int success;
 
 		std::array<GLuint, 8> compiled_shaders;
@@ -43,7 +52,7 @@ namespace mpe
 			MPE_ERROR(could_not_find_or_open + vertex_path);
 			return invalid;
 		}
-		GLuint vertex = CompileShader(source.value(), GL_VERTEX_SHADER, &success);
+		GLuint vertex = CompileShader(source.value(), defines.value(), GL_VERTEX_SHADER, &success);
 		if (success == GL_FALSE)
 		{
 			glDeleteShader(vertex);
@@ -63,7 +72,7 @@ namespace mpe
 			MPE_ERROR(could_not_find_or_open + fragment_path);
 			return invalid;
 		}
-		GLuint fragment = CompileShader(source.value(), GL_FRAGMENT_SHADER, &success);
+		GLuint fragment = CompileShader(source.value(), defines.value(), GL_FRAGMENT_SHADER, &success);
 		if (success == GL_FALSE)
 		{
 			glDeleteShader(fragment);
@@ -78,12 +87,12 @@ namespace mpe
 
 		//GEOMETRY
 		MPE_INFO("Compiling GEOMETRY shader...");
-		source = ReadFileAsString(path + ".geom");
+		source = ReadFileAsString(shader_path + ".geom");
 		if (!source.has_value())
-			MPE_INFO(could_not_find_or_open + path + ".geom");
+			MPE_INFO(could_not_find_or_open + shader_path + ".geom");
 		else
 		{
-			GLuint geometry = CompileShader(source.value(), GL_GEOMETRY_SHADER, &success);
+			GLuint geometry = CompileShader(source.value(), defines.value(), GL_GEOMETRY_SHADER, &success);
 			if (success == GL_FALSE)
 				glDeleteShader(geometry);
 			else
@@ -115,11 +124,6 @@ namespace mpe
 		for (unsigned i = 0; i < compiled_n; i++)
 			glDetachShader(program, compiled_shaders[i]);
 
-		//MPE VALIDATION
-		if (!ValidateForMPE(program))
-			MPE_WARNING("Shader is not MPE-approved! :(");
-		else
-			MPE_INFO("Shader is MPE-approved! :)");
 		return Shader{ program, priority };
 	}
 
@@ -130,13 +134,14 @@ namespace mpe
 		MPE_INFO(id.value != 0 ? "Succesfully freed!" : "Implementation ignored the call on ID 0");
 	}
 
-	GLuint CompileShader(const std::string& source, GLenum type, GLint* success)
+	GLuint CompileShader(const std::string& source, const std::string& defines, GLenum type, GLint* success)
 	{
+		const std::array<const GLchar*, 2> input = { defines.c_str(), source.c_str()};
+		const std::array<const GLint, 2> input_len = { defines.length(), source.length()};
 		constexpr GLsizei LOG_BUFFER_SIZE = 512;
 
 		GLuint shader = glCreateShader(type);
-		const char* src = source.c_str();
-		glShaderSource(shader, 1, &src, nullptr);
+		glShaderSource(shader, 2, input.data(), input_len.data());
 		glCompileShader(shader);
 
 		glGetShaderiv(shader, GL_COMPILE_STATUS, success);
@@ -146,70 +151,9 @@ namespace mpe
 			GLsizei len;
 			glGetShaderInfoLog(shader, LOG_BUFFER_SIZE, &len, log_buffer.data());
 
-			[[maybe_unused]]
-			std::string msg = "Shader compilation failed!\n" + std::string(log_buffer.data(), len);
-			MPE_ERROR(msg);
+			MPE_ERROR("Shader compilation failed!\n" + std::string(log_buffer.data(), len));
 		}
 
 		return shader;
-	}
-
-	bool ValidateForMPE(GLuint shader_program)
-	{
-		std::string uniform_blocks[] = { MPE_CAMERA_BLOCK_NAME, MPE_MESH_BLOCK_NAME, /*MPE_LIGHT_BUFFER_NAME*/ };
-		unsigned uniform_bindings[] = { MPE_CAMERA_BINDING, MPE_MESH_BINDING, /*MPE_LIGHT_BUFFER_NAME*/ };
-
-		std::array<GLenum, 3> properties{ GL_NAME_LENGTH, GL_BUFFER_BINDING, GL_BUFFER_DATA_SIZE };
-		std::array<GLint, properties.size()> values{};
-
-		GLint number_of_uniforms;
-		glGetProgramInterfaceiv(shader_program, GL_UNIFORM_BLOCK, GL_ACTIVE_RESOURCES, &number_of_uniforms);
-		for (GLint i = 0; i < number_of_uniforms; i++)
-		{
-			glGetProgramResourceiv(
-				shader_program, GL_UNIFORM_BLOCK, (GLuint)i,
-				properties.size(), properties.data(),
-				values.size(), nullptr, values.data());
-
-			std::array<char, 128> name_data{};
-			glGetProgramResourceName(
-				shader_program,
-				GL_UNIFORM_BLOCK,
-				(GLuint)i,
-				name_data.size(),
-				nullptr,
-				name_data.data());
-			std::string name(name_data.data(), values[0] - 1);
-			MPE_INFO("Uniform block found: " + name);
-
-			for (size_t j = 0; j < sizeof(uniform_blocks) / sizeof(std::string); j++)
-			{
-				if (name == uniform_blocks[j])
-				{
-					glUniformBlockBinding(shader_program, (GLuint)i, uniform_bindings[j]);
-					MPE_INFO("Uniform block bound at binding point " + std::to_string(uniform_bindings[j]));
-
-					uniform_bindings[j] = ~0;
-					break;
-				}
-			}
-		}
-		for (int x : uniform_bindings)
-			if (x != ~0)
-				return false;
-		/*
-		glUseProgram(shader_program);
-		constexpr GLint MAX_TEXTURES = 8;
-		for (GLint i = 0; i < MAX_TEXTURES; i++)
-		{
-			std::string uniform_name = "textures[" + std::to_string(i) + ']';
-			GLint lc = glGetUniformLocation(shader_program, uniform_name.c_str());
-			if (lc == -1)
-				return false;
-			glUniform1i(lc, i);
-		}
-		*/
-
-		return true;
 	}
 }
