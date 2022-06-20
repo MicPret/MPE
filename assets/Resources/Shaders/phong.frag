@@ -75,7 +75,7 @@ float ComputeShadows(PointLight light, vec3 pos, int light_id)
     for (int i = 0; i < samples; i++)
     {
         float closest_depth = texture(depth_maps[light_id], to_light + gridSamplingDisk[i] * disk_radius).r;
-        closest_depth *= far;   // undo mapping [0;1]   //TODO far_plane
+        closest_depth *= far;   // undo mapping [0;1]
         if(current_depth - bias > closest_depth)
             shadow += 1.0;
     }
