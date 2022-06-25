@@ -6,7 +6,7 @@ void main()
 {
     float light_dist = distance(frag_pos.xyz, light_pos);
     
-    light_dist /= far;
+    light_dist /= CAMERA_FAR_PLANE;
     
     gl_FragDepth = light_dist;
 }

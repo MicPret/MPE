@@ -11,9 +11,9 @@ layout (location = 3) flat out int vx_DrawID;
 
 void main()
 {
+    SET_DRAW_ID;
     vx_texCoords = in_texCoords;
     vx_normal = mat3(transpose(inverse(MODEL_MATRIX))) * in_normal;
-    vx_DrawID = gl_DrawID;
     vx_position = (MODEL_MATRIX * vec4(in_pos, 1.0)).xyz;
-    gl_Position = projection * view * vec4(vx_position, 1.0);
+    gl_Position = PROJECTION_MATRIX * VIEW_MATRIX * vec4(vx_position, 1.0);
 }

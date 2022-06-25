@@ -7,6 +7,5 @@ out vec4 result;
 
 void main()
 {
-    int index = mesh_data[vx_DrawID].texture_index0;
-    result = texture(textures[index], vx_texCoords);
+    result = texture(DIFFUSE_TEXTURE, vx_texCoords);
 }

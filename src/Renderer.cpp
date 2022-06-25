@@ -263,8 +263,8 @@ namespace mpe::Renderer
 			vertices_offsets[0] = 0;
 			indices_offsets[0] = nullptr;
 
-			auto dloc = glGetUniformLocation(shader.id.value, "depth_maps[0]");
-			auto tloc = glGetUniformLocation(shader.id.value, "textures[0]");
+			auto dloc = glGetUniformLocation(shader.id.value, "_depth_maps[0]");
+			auto tloc = glGetUniformLocation(shader.id.value, "_textures[0]");
 
 			if (dloc != -1)
 			{

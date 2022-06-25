@@ -8,8 +8,8 @@ layout (location = 1) flat out int vx_DrawID;
 
 void main()
 {
+    SET_DRAW_ID;
     vx_texCoords = in_texCoords;
-    vx_DrawID = gl_DrawID;
 
-    gl_Position = projection * view * MODEL_MATRIX * vec4(in_pos, 1.0);
+    gl_Position = PROJECTION_MATRIX * VIEW_MATRIX * MODEL_MATRIX * vec4(in_pos, 1.0);
 }
